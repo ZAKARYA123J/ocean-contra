@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Si vous utilisez PostgreSQL
+  url      = env("DATABASE_URL") // Assurez-vous que la variable DATABASE_URL est correctement définie dans .env
+}
+
+model Client {
+  id         Int      @id @default(autoincrement())
+  Firstname  String
+  Lastname   String
+  email      String   @unique
+  password   String
+  numero     String
+  CIN        String
+  city       String
+  address    String
+  codePostal String
+  dossiers   Dossier[] // Relation avec Dossier (one-to-many)
+}
+
+model Dossier {
+  id        Int     @id @default(autoincrement())
+  uploade   String[] // Liste de fichiers téléversés
+  idClient  Int
+  idContra  Int
+  status    Status
+  client    Client  @relation(fields: [idClient], references: [id]) // Relation avec Client (many-to-one)
+  contra    Contra  @relation(fields: [idContra], references: [id]) // Relation avec Contra (many-to-one)
+}
+
+model Contra {
+  id          Int      @id @default(autoincrement())
+  image       String   // URL de l'image (téléchargée dans Firebase par exemple)
+  titleCity   String
+  prix        Float
+  levelLangue String
+  duration    String
+  steps       String[] // Liste d'étapes pour ce contrat
+  dossiers    Dossier[] // Relation avec Dossier (one-to-many)
+  avantage   String?  // Permet des valeurs nulles (facultatif)
+  sectures    Secture[] @relation("ContraSecture") // Relation Many-to-Many
+}
+
+model Secture {
+  id          Int      @id @default(autoincrement())
+  nameSecture String
+  contras     Contra[]  @relation("ContraSecture") // Relation Many-to-Many
+}
+
+enum Status {
+  CONFIRMED
+  INCOMPLETED
+  COMPLETED
+}

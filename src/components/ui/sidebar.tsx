@@ -49,7 +49,7 @@ export default function Sidebar({}: Props) {
                     variant: "ghost",
                     },
                     {
-                    title: "Orders",
+                    title: "register",
                     href: "/orders",
                     icon: ShoppingCart,
                     variant: "ghost",
@@ -59,6 +59,18 @@ export default function Sidebar({}: Props) {
                     href: "/settings",
                     icon: Settings,
                     variant: "ghost",
+                    },
+                    {
+                        title: "dossier",
+                        href: "/dossier",
+                        icon: Settings,
+                        variant: "ghost",
+                    },
+                    {
+                        title: "uploade",
+                        href: "/uploade",
+                        icon: Settings,
+                        variant: "ghost",
                     },
                 ]}
             />
