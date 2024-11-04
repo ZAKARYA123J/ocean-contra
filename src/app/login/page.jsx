@@ -11,8 +11,7 @@ export default function LoginForm() {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
-  const [clientInfo, setClientInfo] = useState(null); // New state to store client and dossier IDs
-
+  const [clientInfo, setClientInfo] = useState(null); 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setLoginData((prevData) => ({ ...prevData, [name]: value }));
@@ -43,14 +42,12 @@ export default function LoginForm() {
       setMessage('Login successful!');
       localStorage.setItem('token', data.token);
 
-      // Store client and dossier info
       setClientInfo({ clientId: data.client.id, dossierId: data.dossierId });
-      // Redirect to client account page with dossiers
 
-      if (data.dossierId) {
-        router.push(`/uploade/${data.dossierId}`);
+      if (data.client && data.client.id) {
+        router.push(`/uploade/${data.client.id}`);
       } else {
-        throw new Error("Dossier ID not found.");
+        throw new Error("Client ID not found.");
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -70,7 +67,6 @@ export default function LoginForm() {
         </div>
       )}
 
-      {/* Display client and dossier IDs if login is successful */}
       {clientInfo && (
         <div className="mb-4 text-gray-700">
           <p>Client ID: {clientInfo.clientId}</p>

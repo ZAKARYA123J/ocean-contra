@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
@@ -13,7 +14,6 @@ export async function POST(req) {
 
     const contraId = idContra ? parseInt(idContra, 10) : null;
 
-    // Vérifie l'existence du contrat
     if (contraId) {
       const contraExists = await prisma.contra.findUnique({
         where: { id: contraId },
@@ -24,7 +24,6 @@ export async function POST(req) {
       }
     }
 
-    // Recherche le client avec son email
     const client = await prisma.client.findUnique({
       where: { email },
       include: { dossiers: true },
@@ -35,14 +34,12 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    // Vérification du mot de passe
     const isValid = await bcrypt.compare(password, client.password);
     if (!isValid) {
       console.error('Password does not match');
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    // Récupère le dossier ou en crée un nouveau si nécessaire
     let dossier = client.dossiers.find((dossier) => dossier.idContra === contraId);
 
     if (contraId && !dossier) {
@@ -63,12 +60,18 @@ export async function POST(req) {
 
     const token = jwt.sign({ clientId: client.id }, JWT_SECRET, { expiresIn: '1h' });
 
+    // Set redirectPath based on the presence of contraId
+    const redirectPath = contraId
+      ? `/uploade/${client.id}?contraId=${contraId}`
+      : `/uploade/${client.id}`;
+
     console.log('Login successful, token generated');
     return NextResponse.json(
       {
         token,
         client: { email: client.email, id: client.id },
-        dossierId: dossier ? dossier.id : null, // Retourne l'ID du dossier
+        dossierId: dossier ? dossier.id : null,
+        redirectPath, // Include the redirect path
       },
       { status: 200 }
     );
