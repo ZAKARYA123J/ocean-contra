@@ -1,17 +1,27 @@
 'use client';
-
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 
 export default function LoginForm() {
-  const searchParams = useSearchParams();
-  const contraId = searchParams.get('contraId');
   const router = useRouter();
-
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [clientInfo, setClientInfo] = useState(null); 
+
+  // Wrap `useSearchParams` with Suspense
+  const SearchParamsComponent = () => {
+    const searchParams = useSearchParams();
+    const contraId = searchParams.get('contraId');
+    return contraId;
+  };
+
+  const contraId = (
+    <Suspense fallback={null}>
+      <SearchParamsComponent />
+    </Suspense>
+  );
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setLoginData((prevData) => ({ ...prevData, [name]: value }));

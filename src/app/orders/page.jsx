@@ -1,9 +1,9 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 
-export default function RegisterForm() {
+function RegisterFormComponent() {
   const searchParams = useSearchParams();
   const contraId = searchParams.get('contraId'); // Get contraId from the URL if available
 
@@ -117,14 +117,22 @@ export default function RegisterForm() {
         </button>
       </form>
       <div className="mt-4 text-center">
-  <p className="text-sm text-gray-600">
-    Dont have an account?{' '}
-    <a href={`/login?contraId=${contraId}`} className="text-blue-500 hover:underline">
-      Register here
-    </a>
-  </p>
-</div>
-
+        <p className="text-sm text-gray-600">
+          Don't have an account?{' '}
+          <a href={`/login?contraId=${contraId}`} className="text-blue-500 hover:underline">
+            Register here
+          </a>
+        </p>
+      </div>
     </div>
+  );
+}
+
+// Wrapping component with Suspense
+export default function RegisterForm() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RegisterFormComponent />
+    </Suspense>
   );
 }
