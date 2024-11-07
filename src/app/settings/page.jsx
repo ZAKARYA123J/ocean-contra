@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 
 const Container = styled.div`
@@ -60,6 +61,20 @@ const TableCell = styled.td`
   border-bottom: 1px solid #ddd;
 `;
 
+const Button = styled.button`
+  background-color: #3b82f6;
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #2563eb;
+  }
+`;
+
 const Message = styled.p`
   text-align: center;
   color: #6b7280;
@@ -71,6 +86,7 @@ export default function ClientList() {
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -114,11 +130,12 @@ export default function ClientList() {
               <TableHeader>Phone</TableHeader>
               <TableHeader>Address</TableHeader>
               <TableHeader>Code Postal</TableHeader>
-              <TableHeader>Uploads</TableHeader>
+              
+              <TableHeader>Actions</TableHeader>
             </tr>
           </TableHead>
           <TableBody>
-            {clients.map((client) => (
+            {clients.map((client) =>
               client.dossiers.length > 0 ? (
                 client.dossiers.map((dossier, index) => (
                   <TableRow key={`${client.id}-${index}`}>
@@ -144,31 +161,32 @@ export default function ClientList() {
                         </TableCell>
                       </>
                     )}
-                    <TableCell>
-                      {dossier.uploade.length > 0 ? (
-                        dossier.uploade.map((file, i) => (
-                          <a key={i} href={file} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', display: 'block' }}>
-                            {file}
-                          </a>
-                        ))
-                      ) : (
-                        'No uploads'
-                      )}
-                    </TableCell>
+
+                    {index === 0 && (
+                      <TableCell rowSpan={client.dossiers.length}>
+                        <Button onClick={() => router.push(`/clientDetails/${client.id}`)}>
+                          View Details
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               ) : (
                 <TableRow key={client.id}>
-                  <TableCell>{client.Firstname} {client.Lastname}</TableCell>
+                  <TableCell>{client.FirstnaFme} {client.Lastname}</TableCell>
                   <TableCell>{client.email}</TableCell>
                   <TableCell>{client.city}</TableCell>
                   <TableCell>{client.numero}</TableCell>
                   <TableCell>{client.address}</TableCell>
                   <TableCell>{client.codePostal}</TableCell>
-                  <TableCell>No dossiers available</TableCell>
+                  <TableCell>
+                    <Button onClick={() => router.push(`/clientDetails/${client.id}`)}>
+                      View Details
+                    </Button>
+                  </TableCell>
                 </TableRow>
               )
-            ))}
+            )}
           </TableBody>
         </StyledTable>
       )}

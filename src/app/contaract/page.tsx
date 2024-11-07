@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import Select from 'react-select'; // Importation de react-select
-
+import Select from 'react-select'; 
 interface Secture {
   id: string;
   nameSecture: string;
@@ -23,7 +22,6 @@ export default function ContraForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Charger les secteurs disponibles depuis l'API
   useEffect(() => {
     setIsMounted(true);
 
@@ -40,7 +38,6 @@ export default function ContraForm() {
     fetchSectures();
   }, []);
 
-  // Gérer l'upload de l'image
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -52,7 +49,6 @@ export default function ContraForm() {
     reader.readAsDataURL(file);
   };
 
-  // Ajouter une étape à la liste des étapes
   const addStep = () => {
     if (newStep.trim() !== '') {
       setStepsArray([...stepsArray, newStep.trim()]);
@@ -60,19 +56,16 @@ export default function ContraForm() {
     }
   };
 
-  // Supprimer une étape
   const removeStep = (index: number) => {
     const updatedSteps = stepsArray.filter((_, i) => i !== index);
     setStepsArray(updatedSteps);
   };
 
-  // Gérer la sélection des secteurs via react-select
   const handleSecturesChange = (selectedOptions: any) => {
     const selectedIds = selectedOptions.map((option: any) => option.value);
     setSelectedSectures(selectedIds);
   };
 
-  // Soumettre le formulaire
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -84,7 +77,7 @@ export default function ContraForm() {
       prix,
       levelLangue,
       duration,
-      idSecture: selectedSectures, // Utiliser les secteurs sélectionnés
+      idSecture: selectedSectures, 
       steps: stepsArray, 
       image,
     };
@@ -110,7 +103,7 @@ export default function ContraForm() {
       setPrix('');
       setLevelLangue('');
       setDuration('');
-      setSelectedSectures([]); // Réinitialiser la sélection des secteurs
+      setSelectedSectures([]); 
       setStepsArray([]); 
       setImage(null); 
 
@@ -201,7 +194,7 @@ export default function ContraForm() {
           />
         </div>
 
-        {/* Sélection multiple pour Secture avec react-select */}
+        
         <div className="mb-4">
           <label htmlFor="idSecture" className="block text-sm font-medium text-gray-700">
             Secteur
@@ -215,7 +208,7 @@ export default function ContraForm() {
           />
         </div>
 
-        {/* Ajout d'une étape */}
+        
         <div className="mb-4">
           <label htmlFor="newStep" className="block text-sm font-medium text-gray-700">
             Ajouter une étape
@@ -236,7 +229,7 @@ export default function ContraForm() {
           </button>
         </div>
 
-        {/* Liste des étapes ajoutées */}
+        
         <div className="mb-4">
           <h2 className="text-lg font-semibold mb-2">Étapes ajoutées :</h2>
           <ul>

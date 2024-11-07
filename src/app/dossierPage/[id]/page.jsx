@@ -9,8 +9,8 @@ export default function DossierDetail() {
   const [dossier, setDossier] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [status, setStatus] = useState(''); // State to track the selected status
-  const [isUpdating, setIsUpdating] = useState(false); // State to track the update process
+  const [status, setStatus] = useState(''); 
+  const [isUpdating, setIsUpdating] = useState(false); 
 
   useEffect(() => {
     if (!id) return;
@@ -23,7 +23,7 @@ export default function DossierDetail() {
         }
         const data = await response.json();
         setDossier(data);
-        setStatus(data.status); // Initialize the status state with the current status
+        setStatus(data.status);
       } catch (error) {
         setError(error.message);
       } finally {
@@ -49,7 +49,6 @@ export default function DossierDetail() {
         throw new Error('Failed to update dossier status');
       }
 
-      // Update the dossier state with the new status
       setDossier((prevDossier) => ({ ...prevDossier, status }));
       alert('Status updated successfully');
     } catch (error) {

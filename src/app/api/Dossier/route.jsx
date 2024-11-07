@@ -126,15 +126,13 @@ export async function POST(req) {
       });
     }
 
-    // Array to store Firebase URLs
     let uploadedURLs = [];
 
-    // Process each file in `files` array
     for (const file of files) {
-      const { base64, type } = file; // `base64` is the file data, `type` is content type (e.g., 'image/png', 'application/pdf')
+      const { base64, type } = file; 
 
       try {
-        const fileName = `${uuidv4()}.${type.split('/')[1]}`; // Generate unique file name with extension
+        const fileName = `${uuidv4()}.${type.split('/')[1]}`; 
         const firebaseFile = storage.file(fileName);
 
         await firebaseFile.save(Buffer.from(base64, 'base64'), {
@@ -154,7 +152,7 @@ export async function POST(req) {
       data: {
         idClient,
         idContra,
-        uploade: uploadedURLs, // Store array of Firebase URLs
+        uploade: uploadedURLs, 
         status,
       },
     });

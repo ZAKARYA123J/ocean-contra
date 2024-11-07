@@ -4,19 +4,23 @@ import { storage } from '../../../../firebase';
 import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
+export const GET = async (req, { params }) => {
+  const { id } = params;
 
-// GET method to retrieve a client by ID, including dossiers
-export async function GET(req, { params }) {
-  const id = parseInt(params.id, 10);
-
-  if (isNaN(id)) {
-    return new Response(JSON.stringify({ error: 'Invalid client ID' }), { status: 400 });
+  if (!id) {
+    return new Response(JSON.stringify({ error: 'Client ID is required' }), { status: 400 });
   }
 
   try {
     const client = await prisma.client.findUnique({
-      where: { id },
-      include: { dossiers: true },
+      where: { id: parseInt(id, 10) },
+      include: {
+        dossiers: {
+          include: {
+            contra: true,
+          },
+        },
+      },
     });
 
     if (!client) {
@@ -28,9 +32,8 @@ export async function GET(req, { params }) {
     console.error('Error retrieving client by ID:', error);
     return new Response(JSON.stringify({ error: 'Failed to retrieve client' }), { status: 500 });
   }
-}
+};
 
-// PUT method to update a client and optionally upload a new file
 export async function PUT(req, { params }) {
   const id = parseInt(params.id, 10);
   const { Firstname, Lastname, email, password, numero, CIN, city, address, codePostal, contraId, file } = await req.json();
@@ -91,7 +94,7 @@ export async function PUT(req, { params }) {
   }
 }
 
-// DELETE method to remove a client and their associated dossiers
+// DELETE 
 export async function DELETE(req, { params }) {
   const id = parseInt(params.id, 10);
 
