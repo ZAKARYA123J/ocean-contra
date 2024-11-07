@@ -13,7 +13,7 @@ export default function ContraList() {
   useEffect(() => {
     async function fetchContras() {
       try {
-        const res = await fetch('http://localhost:3000/api/Contra');
+        const res = await fetch('/api/Contra');
         if (!res.ok) {
           throw new Error('Erreur lors du chargement des contrats');
         }

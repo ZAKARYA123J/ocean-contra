@@ -27,7 +27,7 @@ export default function ContraForm() {
 
     async function fetchSectures() {
       try {
-        const res = await fetch('http://localhost:3000/api/Secture');
+        const res = await fetch('/api/Secture');
         const data = await res.json();
         setSectures(data);
       } catch (error) {
@@ -83,7 +83,7 @@ export default function ContraForm() {
     };
 
     try {
-      const res = await fetch('http://localhost:3000/api/Contra', {
+      const res = await fetch('/api/Contra', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
