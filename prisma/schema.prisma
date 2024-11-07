@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // Si vous utilisez PostgreSQL
+  provider = "postgresql" 
   url      = env("DATABASE_URL") // Assurez-vous que la variable DATABASE_URL est correctement définie dans .env
 }
 
@@ -14,40 +14,42 @@ model Client {
   email      String   @unique
   password   String
   numero     String
-  CIN        String
-  city       String
-  address    String
-  codePostal String
-  dossiers   Dossier[] // Relation avec Dossier (one-to-many)
+  CIN        String?
+  city       String?
+  address    String?
+  codePostal String?
+  dossiers   Dossier[] 
 }
 
 model Dossier {
   id        Int     @id @default(autoincrement())
-  uploade   String[] // Liste de fichiers téléversés
+  uploade   String[] 
   idClient  Int
   idContra  Int
   status    Status
-  client    Client  @relation(fields: [idClient], references: [id]) // Relation avec Client (many-to-one)
-  contra    Contra  @relation(fields: [idContra], references: [id]) // Relation avec Contra (many-to-one)
+  client    Client  @relation(fields: [idClient], references: [id]) 
+  contra    Contra  @relation(fields: [idContra], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt 
 }
 
 model Contra {
   id          Int      @id @default(autoincrement())
-  image       String   // URL de l'image (téléchargée dans Firebase par exemple)
+  image       String   
   titleCity   String
   prix        Float
   levelLangue String
   duration    String
-  steps       String[] // Liste d'étapes pour ce contrat
-  dossiers    Dossier[] // Relation avec Dossier (one-to-many)
-  avantage   String?  // Permet des valeurs nulles (facultatif)
-  sectures    Secture[] @relation("ContraSecture") // Relation Many-to-Many
+  steps       String[] 
+  dossiers    Dossier[] 
+  avantage    String?  
+  sectures    Secture[] @relation("ContraSecture")
 }
 
 model Secture {
   id          Int      @id @default(autoincrement())
   nameSecture String
-  contras     Contra[]  @relation("ContraSecture") // Relation Many-to-Many
+  contras     Contra[]  @relation("ContraSecture") 
 }
 
 enum Status {

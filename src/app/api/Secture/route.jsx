@@ -2,18 +2,15 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Méthode POST pour créer un nouveau Secture
 export async function POST(req) {
   try {
     const body = await req.json();
     const { nameSecture } = body;
 
-    // Vérifier que le nom du secteur est fourni
     if (!nameSecture) {
       return new Response(JSON.stringify({ error: 'nameSecture is required' }), { status: 400 });
     }
 
-    // Créer une nouvelle entrée dans la table Secture
     const newSecture = await prisma.secture.create({
       data: {
         nameSecture,
@@ -27,13 +24,11 @@ export async function POST(req) {
   }
 }
 
-// Méthode GET pour récupérer toutes les entrées de Secture
 export async function GET() {
   try {
-    // Récupérer toutes les entrées de Secture
     const sectures = await prisma.secture.findMany({
       include: {
-        contras: true, // Inclure les contrats associés, notez que 'contras' doit correspondre à votre modèle
+        contras: true, 
       },
     });
     return new Response(JSON.stringify(sectures), { status: 200 });
