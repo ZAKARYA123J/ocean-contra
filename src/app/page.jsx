@@ -24,6 +24,12 @@ const SidebarItem = styled.div`
   color: #333;
   cursor: pointer;
 `;
+const SidebrearItem = styled.div`
+  font-size: 1rem;
+  margin: 10px 0;
+  color: #333;
+  cursor: pointer;
+`;
 
 const Content = styled.div`
   flex: 1;
