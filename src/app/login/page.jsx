@@ -117,7 +117,7 @@ export default function LoginForm() {
 
       <div className="mt-4 text-center">
         <p className="text-sm text-gray-600">
-          Don't have an account?{' '}
+          Dont have an account?{' '}
           <a href={`/register?contraId=${contraId}`} className="text-blue-500 hover:underline">
             Register here
           </a>
