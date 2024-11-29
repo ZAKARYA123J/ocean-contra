@@ -3,56 +3,55 @@ import { storage } from '../../../../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 const prisma = new PrismaClient();
 
-async function parseFormData(req) {
-  const contentType = req.headers.get("content-type");
-  if (!contentType || !contentType.includes("multipart/form-data")) {
-    throw new Error("Unsupported content type, must be multipart/form-data");
-  }
+export async function GET(req, { params }) {
+  const { id } = params;
 
-  const formData = await req.formData();
-  const fields = {};
-  const files = {};
+  try {
+    const contra = await prisma.contra.findUnique({
+      where: { id: parseInt(id, 10) },
+      include: { sectures: true }, // Include related sectors if needed
+    });
 
-  formData.forEach((value, key) => {
-    if (value instanceof File) {
-      files[key] = value;
-    } else {
-      fields[key] = value;
+    if (!contra) {
+      return new Response(JSON.stringify({ error: 'Contra not found' }), {
+        status: 404,
+      });
     }
-  });
 
-  return { fields, files };
+    return new Response(JSON.stringify(contra), { status: 200 });
+  } catch (error) {
+    console.error('Error fetching Contra:', error);
+    return new Response(JSON.stringify({ error: 'Error fetching Contra' }), {
+      status: 500,
+    });
+  }
 }
 
 export async function PUT(req, { params }) {
   const { id } = params;
 
   try {
-    const { fields, files } = await parseFormData(req);
+    const body = await req.json();
+    const { titleCity, prix, levelLangue, duration, selectedSectures, image, avantage, steps } = body;
 
-    const { titleCity, prix, levelLangue, duration, steps } = fields;
-    const parsedSteps = steps ? JSON.parse(steps) : [];
+    const secturesToConnect = Array.isArray(selectedSectures)
+      ? selectedSectures.map((sectureId) => ({ id: parseInt(sectureId, 10) }))
+      : [];
 
-    let imageUrl;
-    if (files.image) {
-      const imageFile = files.image;
-      const fileExtension = imageFile.name.split('.').pop();
+    let imageUrl = image;
+
+    if (image && image.startsWith('data:image/')) {
+      const mimeType = image.match(/data:(.*);base64,/)[1];
+      const fileExtension = mimeType.split('/')[1];
+      const buffer = Buffer.from(image.split(',')[1], 'base64');
+
       const fileName = `${uuidv4()}.${fileExtension}`;
       const imageRef = ref(storage, `images/${fileName}`);
-      const buffer = await imageFile.arrayBuffer();
 
-      await uploadBytes(imageRef, new Uint8Array(buffer));
+      await uploadBytes(imageRef, buffer);
       imageUrl = await getDownloadURL(imageRef);
-    } else {
-      imageUrl = fields.image;
     }
 
     const updatedContra = await prisma.contra.update({
@@ -62,48 +61,21 @@ export async function PUT(req, { params }) {
         prix: prix ? parseFloat(prix) : undefined,
         levelLangue,
         duration,
-        steps: parsedSteps,
+        avantage,
         image: imageUrl,
+        steps: steps || [],
+        sectures: {
+          set: [], // Clear existing relations
+          connect: secturesToConnect, // Connect new sectors
+        },
       },
     });
 
-    return new Response(JSON.stringify(updatedContra), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(JSON.stringify(updatedContra), { status: 200 });
   } catch (error) {
     console.error('Error updating Contra:', error);
     return new Response(JSON.stringify({ error: 'Error updating Contra' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-}
-
-export async function GET(req, { params }) {
-  const { id } = params;
-
-  try {
-    const contra = await prisma.contra.findUnique({
-      where: { id: parseInt(id, 10) }, 
-    });
-
-    if (!contra) {
-      return new Response(JSON.stringify({ error: 'Contra not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(JSON.stringify(contra), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (error) {
-    console.error('Error fetching contra:', error);
-    return new Response(JSON.stringify({ error: 'Error fetching contra' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
     });
   }
 }
@@ -116,15 +88,11 @@ export async function DELETE(req, { params }) {
       where: { id: parseInt(id, 10) },
     });
 
-    return new Response(JSON.stringify(deletedContra), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(JSON.stringify(deletedContra), { status: 200 });
   } catch (error) {
-    console.error('Error deleting contra:', error);
-    return new Response(JSON.stringify({ error: 'Error deleting contra' }), {
+    console.error('Error deleting Contra:', error);
+    return new Response(JSON.stringify({ error: 'Error deleting Contra' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
     });
   }
 }
