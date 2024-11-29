@@ -58,11 +58,38 @@ const Card = styled.div`
   text-align: center;
 `;
 
+// Styled components for the table
+const Table = styled.table`
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+`;
+
+const TableHead = styled.thead`
+  background-color: #f4f5f7;
+`;
+
+const TableRow = styled.tr`
+  &:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+`;
+
+const TableHeader = styled.th`
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+`;
+
+const TableCell = styled.td`
+  padding: 10px;
+  border: 1px solid #ddd;
+`;
+
 export default function Dashboard() {
   const [contracts, setContracts] = useState([]);
   const [dossiers, setDossiers] = useState([]);
   const [clients, setClients] = useState([]);
-  const [lastUpdatedDossier, setLastUpdatedDossier] = useState(null);
 
   useEffect(() => {
     // Fetch data from your API
@@ -79,11 +106,6 @@ export default function Dashboard() {
         setContracts(contractData);
         setDossiers(dossierData);
         setClients(clientData);
-
-        // Assuming dossierData is sorted by creation or update date in descending order
-        if (dossierData.length > 0) {
-          setLastUpdatedDossier(dossierData[0]);
-        }
       } catch (error) {
         console.error("Error fetching data", error);
       }
@@ -94,8 +116,7 @@ export default function Dashboard() {
 
   return (
     <Container>
-      {/* Sidebar */}
-      
+     
 
       {/* Main Content */}
       <Content>
@@ -122,15 +143,32 @@ export default function Dashboard() {
           </Card>
         </CardsContainer>
 
-        {/* Last Updated/Created Dossier */}
+        {/* Last 5 Created/Updated Dossiers in a Table */}
         <div style={{ marginTop: '20px' }}>
-          <h3>Last Updated/Created Dossier</h3>
-          {lastUpdatedDossier ? (
-            <div>
-              <p><strong>Status:</strong> {lastUpdatedDossier.status}</p>
-              <p><strong>Client ID:</strong> {lastUpdatedDossier.idClient}</p>
-              <p><strong>Associated Contra ID:</strong> {lastUpdatedDossier.idContra}</p>
-            </div>
+          <h3>Last 5 Created/Updated Dossiers</h3>
+          {dossiers.length > 0 ? (
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeader>Status</TableHeader>
+                  <TableHeader>Client ID</TableHeader>
+                  <TableHeader>Associated Contra ID</TableHeader>
+                  <TableHeader>Created At</TableHeader>
+                  <TableHeader>Updated At</TableHeader>
+                </TableRow>
+              </TableHead>
+              <tbody>
+                {dossiers.slice(0, 5).map((dossier) => (
+                  <TableRow key={dossier.id}>
+                    <TableCell>{dossier.status}</TableCell>
+                    <TableCell>{dossier.idClient}</TableCell>
+                    <TableCell>{dossier.idContra}</TableCell>
+                    <TableCell>{new Date(dossier.createdAt).toLocaleString()}</TableCell>
+                    <TableCell>{new Date(dossier.updatedAt).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </tbody>
+            </Table>
           ) : (
             <p>No recent dossier updates.</p>
           )}

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { FaMapMarkerAlt, FaBuilding, FaLanguage, FaCalendarAlt, FaMedkit } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaBuilding, FaLanguage, FaCalendarAlt, FaMedkit, FaEdit, FaTrash, FaCheckCircle } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
 export default function ContraList() {
@@ -13,7 +13,7 @@ export default function ContraList() {
   useEffect(() => {
     async function fetchContras() {
       try {
-        const res = await fetch('http://localhost:3000/api/Contra');
+        const res = await fetch('/api/Contra');
         if (!res.ok) {
           throw new Error('Erreur lors du chargement des contrats');
         }
@@ -28,6 +28,24 @@ export default function ContraList() {
     }
     fetchContras();
   }, []);
+
+  const handleDelete = async (id) => {
+    const confirmed = confirm("Are you sure you want to delete this contract?");
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/Contra/${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setContras((prev) => prev.filter((contra) => contra.id !== id));
+      } else {
+        console.error('Failed to delete contract');
+      }
+    } catch (error) {
+      console.error('Error deleting contract:', error);
+    }
+  };
 
   if (isLoading) return <p>Chargement des contrats...</p>;
   if (errorMessage) return <p>{errorMessage}</p>;
@@ -64,9 +82,18 @@ export default function ContraList() {
                   <FaMedkit className="icon" /> {contra.avantage || 'Housing, medical care, renewable for 5 years, and citizenship assistance'}
                 </p>
 
-                <button onClick={() => router.push(`/orders?contraId=${contra.id}`)} className="apply-button">
-                  To Apply
-                </button>
+                {/* Action Buttons */}
+                <div className="action-buttons">
+                  <button onClick={() => router.push(`/updatecontra/${contra.id}`)} className="icon-button edit-button">
+                    <FaEdit /> Update
+                  </button>
+                  <button onClick={() => handleDelete(contra.id)} className="icon-button delete-button">
+                    <FaTrash /> Delete
+                  </button>
+                  <button onClick={() => router.push(`/orders?contraId=${contra.id}`)} className="icon-button apply-button">
+                    <FaCheckCircle /> Apply
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -92,7 +119,6 @@ export default function ContraList() {
           color: white;
           padding: 10px 20px;
           border-radius: 30px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
           cursor: pointer;
           transition: background-color 0.3s;
           margin-bottom: 24px;
@@ -103,10 +129,6 @@ export default function ContraList() {
 
         .add-button:hover {
           background-color: #2f855a;
-        }
-
-        .no-contracts {
-          text-align: center;
         }
 
         .grid {
@@ -160,21 +182,48 @@ export default function ContraList() {
           margin-right: 8px;
         }
 
-        .apply-button {
-          width: 100%;
-          background-color: #3182ce;
-          color: white;
-          padding: 10px;
-          border-radius: 30px;
+        .action-buttons {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 16px;
+        }
+
+        .icon-button {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 12px;
+          border-radius: 20px;
+          font-size: 0.875rem;
           cursor: pointer;
-          transition: background-color 0.3s;
+          color: white;
+          border: none;
+        }
+
+        .edit-button {
+          background-color: #3182ce;
+        }
+
+        .edit-button:hover {
+          background-color: #2b6cb0;
+        }
+
+        .delete-button {
+          background-color: #e53e3e;
+        }
+
+        .delete-button:hover {
+          background-color: #c53030;
+        }
+
+        .apply-button {
+          background-color: #38a169;
         }
 
         .apply-button:hover {
-          background-color: #2b6cb0;
+          background-color: #2f855a;
         }
       `}</style>
     </div>
   );
 }
-
