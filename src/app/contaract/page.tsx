@@ -12,7 +12,7 @@ export default function ContraForm() {
   const [prix, setPrix] = useState<string>('');
   const [levelLangue, setLevelLangue] = useState<string>('');
   const [duration, setDuration] = useState<string>('');
-  const [selectedSectures, setSelectedSectures] = useState<string[]>([]); // État pour les secteurs sélectionnés
+  const [selectedSectures, setSelectedSectures] = useState<string[]>([]); 
   const [newStep, setNewStep] = useState<string>(''); 
   const [stepsArray, setStepsArray] = useState<string[]>([]); 
   const [image, setImage] = useState<string | null>(null);

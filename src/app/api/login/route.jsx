@@ -1,5 +1,3 @@
-
-import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -14,14 +12,12 @@ function setCorsHeaders(response) {
 }
 export async function POST(req) {
   try {
-    const { email, password, idContra } = await req.json();
-    console.log("Received login request:", { email, password, idContra });
+    const { email, password, contraId } = await req.json();
+    console.log('Received login request:', { email, password, contraId });
 
-    const contraId = idContra ? parseInt(idContra, 10) : null;
-
-    if (contraId) {
-      const contraExists = await prisma.contra.findUnique({
-        where: { id: contraId },
+    if (!email || !password) {
+      return new Response(JSON.stringify({ error: 'Email and password are required' }), {
+        status: 400,
       });
       if (!contraExists) {
         console.error('Specified contract (Contra) does not exist:', contraId);
@@ -29,60 +25,61 @@ export async function POST(req) {
       }
     }
 
-    const client = await prisma.client.findUnique({
+    const register = await prisma.register.findUnique({
       where: { email },
-      include: { dossiers: true },
     });
 
-    if (!client) {
-      console.error('Client not found with the provided email');
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+    if (!register) {
+      return new Response(JSON.stringify({ error: 'Invalid email or password' }), { status: 401 });
     }
 
-    const isValid = await bcrypt.compare(password, client.password);
-    if (!isValid) {
-      console.error('Password does not match');
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+    const isPasswordValid = await bcrypt.compare(password, register.password);
+    if (!isPasswordValid) {
+      return new Response(JSON.stringify({ error: 'Invalid email or password' }), { status: 401 });
     }
 
-    let dossier = client.dossiers.find((dossier) => dossier.idContra === contraId);
+    const token = jwt.sign({ registerId: register.id }, JWT_SECRET, { expiresIn: '1h' });
 
-    if (contraId && !dossier) {
-      dossier = await prisma.dossier.create({
-        data: {
-          uploade: [],
-          status: 'INCOMPLETED',
-          client: {
-            connect: { id: client.id },
-          },
-          contra: {
-            connect: { id: contraId },
-          },
+    let message = 'Access granted.';
+    let dossier = null;
+
+    if (register.StatuClient === 'verified' && contraId) {
+      const existingDossier = await prisma.dossier.findFirst({
+        where: {
+          idregister: register.id,
+          idContra: contraId,
         },
       });
-      console.log(`Dossier created for client ${client.id} and contra ${contraId}`);
+
+      if (existingDossier) {
+        message = 'Dossier already exists for this register and contra.';
+      } else {
+        dossier = await prisma.dossier.create({
+          data: {
+            idregister: register.id,
+            idContra: contraId,
+            status: 'INCOMPLETED',
+          },
+        });
+
+        message = 'Dossier created successfully.';
+      }
+    } else if (register.StatuClient === 'inverified' || !contraId) {
+      message = 'You have to complete your account.';
     }
 
-    const token = jwt.sign({ clientId: client.id }, JWT_SECRET, { expiresIn: '1h' });
-
-    // Set redirectPath based on the presence of contraId
-    const redirectPath = contraId
-      ? `/uploade/${client.id}?contraId=${contraId}`
-      : `/uploade/${client.id}`;
-
-    console.log('Login successful, token generated');
-    return NextResponse.json(
-      {
+    return new Response(
+      JSON.stringify({
         token,
-        client: { email: client.email, id: client.id },
-        dossierId: dossier ? dossier.id : null,
-        redirectPath, // Include the redirect path
-      },
+        user: { email: register.email, id: register.id, Firstname: register.Firstname, Lastname: register.Lastname },
+        message,
+        dossier: dossier || null,
+      }),
       { status: 200 }
     );
   } catch (error) {
     console.error('Error during login:', error instanceof Error ? error.message : 'Unknown error');
-    return NextResponse.json({ error: 'Error logging in' }, { status: 500 });
+    return new Response(JSON.stringify({ error: 'Error logging in' }), { status: 500 });
   } finally {
     await prisma.$disconnect();
   }

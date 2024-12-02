@@ -7,20 +7,6 @@ export default function LoginForm() {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
-  const [clientInfo, setClientInfo] = useState(null); 
-
-  // Wrap `useSearchParams` with Suspense
-  const SearchParamsComponent = () => {
-    const searchParams = useSearchParams();
-    const contraId = searchParams.get('contraId');
-    return contraId;
-  };
-
-  const contraId = (
-    <Suspense fallback={null}>
-      <SearchParamsComponent />
-    </Suspense>
-  );
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,28 +26,34 @@ export default function LoginForm() {
         },
         body: JSON.stringify({
           ...loginData,
-          idContra: contraId ? parseInt(contraId, 10) : null,
+          contraId: contraId ? parseInt(contraId, 10) : null,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Invalid email or password');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Invalid email or password');
       }
 
       const data = await response.json();
-      setMessage('Login successful!');
+
       localStorage.setItem('token', data.token);
+      setMessage(data.message || 'Login successful!');
 
-      setClientInfo({ clientId: data.client.id, dossierId: data.dossierId });
-
-      if (data.client && data.client.id) {
-        router.push(`/uploade/${data.client.id}`);
+      if (data.message.includes('complete')) {
+        setTimeout(() => {
+          router.push('/complete-account'); // Redirect for account completion
+        }, 2000);
+      } else if (data.message.includes('Dossier created')) {
+        setTimeout(() => {
+          router.push(`/dossier/${data.dossier.id}`); // Redirect to the dossier page
+        }, 2000);
       } else {
-        throw new Error("Client ID not found.");
+        router.push('/dashboard'); // Default redirect
       }
     } catch (error) {
       console.error('Login error:', error);
-      setMessage('Failed to log in. Please check your email or password.');
+      setMessage(error.message || 'Failed to log in. Please check your email or password.');
     } finally {
       setIsLoading(false);
     }
@@ -74,13 +66,6 @@ export default function LoginForm() {
       {message && (
         <div className={`mb-4 ${message.includes('successful') ? 'text-green-600' : 'text-red-600'}`}>
           {message}
-        </div>
-      )}
-
-      {clientInfo && (
-        <div className="mb-4 text-gray-700">
-          <p>Client ID: {clientInfo.clientId}</p>
-          <p>Dossier ID: {clientInfo.dossierId}</p>
         </div>
       )}
 
@@ -125,6 +110,13 @@ export default function LoginForm() {
           {isLoading ? 'Logging in...' : 'Login'}
         </button>
       </form>
+
+      <div className="mt-4 text-center">
+        <p className="text-sm text-gray-600">
+          Dont have an account?{' '}
+          
+        </p>
+      </div>
     </div>
   );
 }

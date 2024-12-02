@@ -1,94 +1,207 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
-export default function ClientPage() {
-  const router = useRouter();
-  const { id: clientId } = useParams();
-  const [clientData, setClientData] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function ClientForm() {
+  const [clientData, setClientData] = useState({
+    CIN: '',
+    secture: '',
+    city: '',
+    address: '',
+    zipCode: '',
+    apostyle: '',
+    CINFront: null,
+    CINBackground: null,
+    passport: null,
+    diplomat: null,
+    images: null,
+    addaDocument: [],
+    registerId: '',
+  });
+  const [clients, setClients] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState(null);
 
-  useEffect(() => {
-    async function fetchClientData() {
-      try {
-        const response = await fetch(`/api/Client/${clientId}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch client data');
-        }
-        const data = await response.json();
-        setClientData(data);
-      } catch (error) {
-        console.error('Error fetching client data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (clientId) fetchClientData();
-  }, [clientId]);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setClientData((prevData) => ({ ...prevData, [name]: value }));
+  };
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/logout', {
-        method: 'POST',
-      });
-      localStorage.removeItem('token');
-      router.push('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+
+    if (name === 'addaDocument') {
+      setClientData((prevData) => ({
+        ...prevData,
+        [name]: Array.from(files),
+      }));
+    } else {
+      setClientData((prevData) => ({
+        ...prevData,
+        [name]: files[0],
+      }));
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (!clientData) return <div>No client data found</div>;
+  const fetchClients = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/Client');
+      if (!response.ok) throw new Error('Failed to fetch clients');
+      const data = await response.json();
+      setClients(data);
+    } catch (error) {
+      console.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage(null);
+
+    try {
+      const formData = { ...clientData };
+      const fileFields = ['CINFront', 'CINBackground', 'passport', 'diplomat', 'images'];
+
+      for (const field of fileFields) {
+        if (formData[field]) {
+          const file = formData[field];
+          const base64 = await toBase64(file);
+          formData[field] = { base64, type: file.type };
+        }
+      }
+
+      if (formData.addaDocument && formData.addaDocument.length > 0) {
+        formData.addaDocument = await Promise.all(
+          formData.addaDocument.map(async (file) => ({
+            base64: await toBase64(file),
+            type: file.type,
+          }))
+        );
+      }
+
+      const response = await fetch('/api/Client', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error('Failed to create client');
+      const data = await response.json();
+
+      setMessage('Client created successfully!');
+      setClientData({
+        CIN: '',
+        secture: '',
+        city: '',
+        address: '',
+        zipCode: '',
+        apostyle: '',
+        CINFront: null,
+        CINBackground: null,
+        passport: null,
+        diplomat: null,
+        images: null,
+        addaDocument: [],
+        registerId: '',
+      });
+
+      fetchClients(); 
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = (error) => reject(error);
+    });
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Client Account</h1>
-      <div className="text-gray-700">
-        <p><strong>Firstname:</strong> {clientData.Firstname}</p>
-        <p><strong>Lastname:</strong> {clientData.Lastname}</p>
-        <p><strong>Email:</strong> {clientData.email}</p>
-        <p><strong>Numero:</strong> {clientData.numero}</p>
-        <p><strong>CIN:</strong> {clientData.CIN}</p>
-        <p><strong>City:</strong> {clientData.city}</p>
-        <p><strong>Address:</strong> {clientData.address}</p>
-        <p><strong>Code Postal:</strong> {clientData.codePostal}</p>
-      </div>
+      <h1 className="text-2xl font-bold mb-4">Create Client</h1>
 
-      <button
-        onClick={handleLogout}
-        className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 mt-4"
-      >
-        Logout
-      </button>
-
-      {clientData.dossiers && clientData.dossiers.length > 0 ? (
-        <div className="mt-4">
-          <h2 className="text-xl font-semibold mb-2">Dossiers</h2>
-          {clientData.dossiers.map((dossier) => (
-            <div key={dossier.id} className="mb-4 p-4 border rounded">
-              <p><strong>Dossier ID:</strong> {dossier.id}</p>
-              <p><strong>Contract ID:</strong> {dossier.idContra}</p>
-              <p><strong>Status:</strong> {dossier.status}</p>
-              {dossier.uploade && dossier.uploade.length > 0 && (
-                <div>
-                  <strong>Uploaded Files:</strong>
-                  <ul>
-                    {dossier.uploade.map((file, index) => (
-                      <li key={index}>
-                        <a href={file} target="_blank" rel="noopener noreferrer">{file}</a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          ))}
+      {message && (
+        <div
+          className={`mb-4 ${
+            message.includes('successfully') ? 'text-green-600' : 'text-red-600'
+          }`}
+        >
+          {message}
         </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {Object.keys(clientData).map((field) => {
+          if (['CINFront', 'CINBackground', 'passport', 'diplomat', 'images', 'addaDocument'].includes(field)) {
+            return (
+              <div key={field}>
+                <label htmlFor={field} className="block text-sm font-medium text-gray-700">
+                  {field.replace(/([A-Z])/g, ' $1').trim()}
+                </label>
+                <input
+                  type="file"
+                  id={field}
+                  name={field}
+                  multiple={field === 'addaDocument'}
+                  onChange={handleFileChange}
+                  className="mt-1 p-2 block w-full border border-gray-300 rounded-md"
+                />
+              </div>
+            );
+          }
+
+          return (
+            <div key={field}>
+              <label htmlFor={field} className="block text-sm font-medium text-gray-700">
+                {field.replace(/([A-Z])/g, ' $1').trim()}
+              </label>
+              <input
+                type="text"
+                id={field}
+                name={field}
+                value={clientData[field]}
+                onChange={handleChange}
+                className="mt-1 p-2 block w-full border border-gray-300 rounded-md"
+              />
+            </div>
+          );
+        })}
+
+        <button
+          type="submit"
+          className={`bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 ${
+            isLoading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          disabled={isLoading}
+        >
+          {isLoading ? 'Submitting...' : 'Submit'}
+        </button>
+      </form>
+
+      <h2 className="text-xl font-bold mt-8">Clients</h2>
+      {isLoading ? (
+        <p>Loading...</p>
       ) : (
-        <p className="mt-4">No dossiers found.</p>
+        <ul className="list-disc pl-5">
+          {clients.map((client) => (
+            <li key={client.id}>
+              {client.city}, {client.address} (Register ID: {client.registerId})
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

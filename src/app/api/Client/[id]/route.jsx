@@ -1,110 +1,120 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-import { storage } from '../../../../firebase';
+import { storage } from '../../../../firebase'; 
 import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
-export const GET = async (req, { params }) => {
-  const { id } = params;
 
-  if (!id) {
-    return new Response(JSON.stringify({ error: 'Client ID is required' }), { status: 400 });
-  }
+const uploadFileToFirebase = async (fileBase64, fileType) => {
+  const fileName = `${uuidv4()}.${fileType.split('/')[1]}`;
+  const firebaseFile = storage.ref(fileName);
+
+  await firebaseFile.putString(fileBase64, 'base64', {
+    contentType: fileType,
+  });
+
+  return firebaseFile.getDownloadURL();
+};
+
+export async function GET(req, { params }) {
+  const { id } = params;
 
   try {
     const client = await prisma.client.findUnique({
       where: { id: parseInt(id, 10) },
-      include: {
-        dossiers: {
-          include: {
-            contra: true,
-          },
-        },
-      },
+      include: { register: true, dossiers: true },
     });
 
     if (!client) {
-      return new Response(JSON.stringify({ error: 'Client not found' }), { status: 404 });
+      return new Response(
+        JSON.stringify({ error: `Client with ID ${id} not found` }),
+        { status: 404 }
+      );
     }
 
     return new Response(JSON.stringify(client), { status: 200 });
   } catch (error) {
-    console.error('Error retrieving client by ID:', error);
-    return new Response(JSON.stringify({ error: 'Failed to retrieve client' }), { status: 500 });
-  }
-};
-
-export async function PUT(req, { params }) {
-  const id = parseInt(params.id, 10);
-  const { Firstname, Lastname, email, password, numero, CIN, city, address, codePostal, contraId, file } = await req.json();
-
-  let fileURL = null;
-  if (file) {
-    try {
-      const fileName = `${uuidv4()}_${file.name}`;
-      const firebaseFile = storage.file(fileName);
-      await firebaseFile.save(Buffer.from(file, 'base64'), {
-        contentType: file.type,
-      });
-      await firebaseFile.makePublic();
-      fileURL = `https://storage.googleapis.com/${storage.name}/${fileName}`;
-    } catch (uploadError) {
-      console.error('Error uploading file to Firebase:', uploadError);
-      return new Response(JSON.stringify({ error: 'Failed to upload file to Firebase' }), { status: 500 });
-    }
-  }
-
-  try {
-    const updatedData = {
-      Firstname,
-      Lastname,
-      email,
-      numero,
-      CIN,
-      city,
-      address,
-      codePostal,
-    };
-
-    if (password) {
-      updatedData.password = await bcrypt.hash(password, 10);
-    }
-
-    const updatedClient = await prisma.client.update({
-      where: { id },
-      data: {
-        ...updatedData,
-        ...(contraId ? {
-          dossiers: {
-            updateMany: {
-              where: { idContra: contraId },
-              data: {
-                uploade: fileURL ? [fileURL] : undefined,
-                status: 'INCOMPLETED',
-              },
-            },
-          },
-        } : {}),
-      },
-    });
-    return new Response(JSON.stringify(updatedClient), { status: 200 });
-  } catch (error) {
-    console.error('Error updating client or dossier:', error);
-    return new Response(JSON.stringify({ error: 'Failed to update client or dossier' }), { status: 500 });
+    console.error('Error retrieving client:', error);
+    return new Response(
+      JSON.stringify({ error: 'Failed to retrieve client' }),
+      { status: 500 }
+    );
   }
 }
 
-// DELETE 
-export async function DELETE(req, { params }) {
-  const id = parseInt(params.id, 10);
+export async function PUT(req, { params }) {
+  const { id } = params;
+  const {
+    CINFront,
+    CINBackground,
+    passport,
+    diplomat,
+    images,
+    addaDocument,
+    ...updateData
+  } = await req.json();
 
   try {
-    await prisma.client.delete({
-      where: { id },
+    const client = await prisma.client.findUnique({ where: { id: parseInt(id, 10) } });
+
+    if (!client) {
+      return new Response(
+        JSON.stringify({ error: `Client with ID ${id} not found` }),
+        { status: 404 }
+      );
+    }
+
+    const uploadedFiles = {};
+
+    if (CINFront) uploadedFiles.CINFront = await uploadFileToFirebase(CINFront.base64, CINFront.type);
+    if (CINBackground) uploadedFiles.CINBackground = await uploadFileToFirebase(CINBackground.base64, CINBackground.type);
+    if (passport) uploadedFiles.passport = await uploadFileToFirebase(passport.base64, passport.type);
+    if (diplomat) uploadedFiles.diplomat = await uploadFileToFirebase(diplomat.base64, diplomat.type);
+    if (images) uploadedFiles.images = await uploadFileToFirebase(images.base64, images.type);
+    if (addaDocument && addaDocument.length > 0) {
+      uploadedFiles.addaDocument = await Promise.all(
+        addaDocument.map((file) => uploadFileToFirebase(file.base64, file.type))
+      );
+    }
+
+    const updatedClient = await prisma.client.update({
+      where: { id: parseInt(id, 10) },
+      data: { ...updateData, ...uploadedFiles },
     });
-    return new Response(JSON.stringify({ message: 'Client and associated dossiers deleted successfully' }), { status: 200 });
+
+    return new Response(JSON.stringify(updatedClient), { status: 200 });
   } catch (error) {
-    console.error('Error deleting client or dossier:', error);
-    return new Response(JSON.stringify({ error: 'Failed to delete client or dossier' }), { status: 500 });
+    console.error('Error updating client:', error);
+    return new Response(
+      JSON.stringify({ error: 'Failed to update client' }),
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req, { params }) {
+  const { id } = params;
+
+  try {
+    const client = await prisma.client.findUnique({ where: { id: parseInt(id, 10) } });
+
+    if (!client) {
+      return new Response(
+        JSON.stringify({ error: `Client with ID ${id} not found` }),
+        { status: 404 }
+      );
+    }
+
+    await prisma.client.delete({ where: { id: parseInt(id, 10) } });
+
+    return new Response(
+      JSON.stringify({ message: `Client with ID ${id} successfully deleted` }),
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Error deleting client:', error);
+    return new Response(
+      JSON.stringify({ error: 'Failed to delete client' }),
+      { status: 500 }
+    );
   }
 }

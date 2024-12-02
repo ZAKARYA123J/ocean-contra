@@ -5,8 +5,7 @@ import { useState, Suspense } from 'react';
 
 function RegisterFormComponent() {
   const searchParams = useSearchParams();
-  const contraId = searchParams.get('contraId'); // Get contraId from the URL if available
-
+  const contraId = searchParams.get('contraId'); 
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [errors, setErrors] = useState({});
@@ -57,7 +56,7 @@ function RegisterFormComponent() {
         },
         body: JSON.stringify({
           ...clientData,
-          contraId: contraId ? parseInt(contraId, 10) : null, // Include contraId if present
+          contraId: contraId ? parseInt(contraId, 10) : null,
         }),
       });
 

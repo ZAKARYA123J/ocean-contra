@@ -58,7 +58,6 @@ export async function POST(req) {
 // Méthode GET pour récupérer les Contras
 export async function GET() {
   try {
-    // Récupérer toutes les entrées de Contra
     const contras = await prisma.contra.findMany();
     return new Response(JSON.stringify(contras), { status: 200 });
   } catch (error) {
