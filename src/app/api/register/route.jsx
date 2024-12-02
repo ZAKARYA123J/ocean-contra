@@ -47,29 +47,24 @@ export async function POST(req) {
   }
 }
 
-// GET: Retrieve a register entry by ID
+// GET
 export async function GET(req) {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-
   try {
-    if (!id || isNaN(id)) {
-      return new Response(JSON.stringify({ error: "A valid ID is required" }), { status: 400 });
-    }
-
-    // Fetch the register by ID
-    const register = await prisma.register.findUnique({
-      where: { id: parseInt(id, 10) },
-      include: { dossiers: true }, // Include related dossiers
+    const registers = await prisma.register.findMany({
+      include: { 
+        dossiers: true, 
+      },
     });
 
-    if (!register) {
-      return new Response(JSON.stringify({ error: "Register not found" }), { status: 404 });
-    }
-
-    return new Response(JSON.stringify(register), { status: 200 });
+    return new Response(JSON.stringify(registers), { 
+      status: 200, 
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
-    console.error("Error retrieving register:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 400 });
+    console.error('Error fetching registers:', error);
+    return new Response(JSON.stringify({ error: 'Failed to fetch registers' }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
