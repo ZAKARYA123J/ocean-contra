@@ -21,7 +21,7 @@ export async function GET(req, { params }) {
   try {
     const client = await prisma.client.findUnique({
       where: { id: parseInt(id, 10) },
-      include: { register: true, dossiers: true },
+      include: { register: true }, // Include related register details
     });
 
     if (!client) {
@@ -33,9 +33,9 @@ export async function GET(req, { params }) {
 
     return new Response(JSON.stringify(client), { status: 200 });
   } catch (error) {
-    console.error('Error retrieving client:', error);
+    console.error('Error fetching client:', error);
     return new Response(
-      JSON.stringify({ error: 'Failed to retrieve client' }),
+      JSON.stringify({ error: 'Failed to fetch client' }),
       { status: 500 }
     );
   }

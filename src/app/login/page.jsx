@@ -1,8 +1,12 @@
 'use client';
+
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, Suspense } from 'react';
 
-export default function LoginForm() {
+function LoginFormContent() {
+  const searchParams = useSearchParams();
+  const contraId = searchParams.get('contraId');
   const router = useRouter();
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
@@ -118,5 +122,13 @@ export default function LoginForm() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginForm() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginFormContent />
+    </Suspense>
   );
 }

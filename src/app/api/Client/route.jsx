@@ -88,3 +88,23 @@ export async function POST(req) {
     );
   }
 }
+export async function GET(req) {
+  try {
+    const clients = await prisma.client.findMany({
+      include: {
+        register: true,
+      },
+    });
+
+    return new Response(JSON.stringify(clients), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Error fetching clients:", error);
+    return new Response(
+      JSON.stringify({ error: "Failed to fetch clients" }),
+      { status: 500 }
+    );
+  }
+}

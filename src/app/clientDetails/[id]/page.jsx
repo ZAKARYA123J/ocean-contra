@@ -1,5 +1,3 @@
-// pages/clientDetails/[id].js
-
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -21,16 +19,6 @@ const Title = styled.h1`
   margin-bottom: 1rem;
 `;
 
-const ClientInfo = styled.div`
-  width: 100%;
-  max-width: 800px;
-  padding: 1.5rem;
-  background-color: #f9fafb;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-`;
-
 const InfoItem = styled.p`
   font-size: 1rem;
   color: #4b5563;
@@ -41,85 +29,27 @@ const InfoItem = styled.p`
   }
 `;
 
-const DossierGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-  width: 100%;
-  max-width: 1200px;
-`;
-
-const DossierCard = styled.div`
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-`;
-
-const CardImage = styled.div`
-  height: 200px;
-  background-image: url(${props => props.src});
-  background-size: cover;
-  background-position: center;
-`;
-
-const CardContent = styled.div`
-  padding: 1rem;
-`;
-
-const IconText = styled.div`
-  display: flex;
-  align-items: center;
-  margin-top: 0.5rem;
-  color: #374151;
-
-  & > span {
-    margin-right: 0.5rem;
-  }
-`;
-
-const ApplyButton = styled.a`
-  background-color: #3b82f6;
-  color: #ffffff;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  text-align: center;
-  font-weight: 600;
-  margin-top: 1rem;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: #2563eb;
-  }
-`;
-
 export default function ClientDetails() {
   const { id } = useParams();
-  const [client, setClient] = useState(null);
+  const [data, setData] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (id) {
-      const fetchClientById = async () => {
+      const fetchDetails = async () => {
         try {
-          const response = await fetch(`/api/Client/${id}`);
+          const response = await fetch(`/api/register/${id}`); // Fetch register and client details
           if (!response.ok) {
-            throw new Error('Failed to fetch client details');
+            throw new Error('Failed to fetch details');
           }
-          const data = await response.json();
-          setClient(data);
+          const result = await response.json();
+          setData(result);
         } catch (error) {
           setError(error.message);
         }
       };
 
-      fetchClientById();
+      fetchDetails();
     }
   }, [id]);
 
@@ -127,59 +57,29 @@ export default function ClientDetails() {
     return <p style={{ color: 'red' }}>Error: {error}</p>;
   }
 
-  if (!client) {
-    return <p>Loading client details...</p>;
+  if (!data) {
+    return <p>Loading details...</p>;
   }
 
   return (
     <Container>
       <Title>Client Details</Title>
 
-      {/* Section des informations du client */}
-      <ClientInfo>
-        <InfoItem><strong>Full Name:</strong> {client.Firstname} {client.Lastname}</InfoItem>
-        <InfoItem><strong>Email:</strong> {client.email}</InfoItem>
-        <InfoItem><strong>City:</strong> {client.city}</InfoItem>
-        <InfoItem><strong>cin:</strong> {client.CIN}</InfoItem>
-        <InfoItem><strong>Phone:</strong> {client.numero}</InfoItem>
-        <InfoItem><strong>Address:</strong> {client.address}</InfoItem>
-        <InfoItem><strong>Code Postal:</strong> {client.codePostal}</InfoItem>
-      </ClientInfo>
+      <div>
+        <InfoItem><strong>Full Name:</strong> {data.Firstname} {data.Lastname}</InfoItem>
+        <InfoItem><strong>Email:</strong> {data.email}</InfoItem>
+        <InfoItem><strong>Status:</strong> {data.StatuClient}</InfoItem>
+      </div>
 
-      {/* Grille des dossiers */}
-      <DossierGrid>
-        {client.dossiers.length > 0 ? (
-          client.dossiers.map((dossier, index) => (
-            <DossierCard key={index}>
-              {/* Placeholder pour l'image de Dossier */}
-              <CardImage src="https://via.placeholder.com/300x200" alt="Dossier Image" />
-
-              <CardContent>
-                <h3> {dossier.location || "Unknown Location"}</h3>
-                <IconText>
-                  
-                  <p>Construction / Blacksmithing / Joinery</p>
-                </IconText>
-                <IconText>
-                  
-                  <p>{dossier.languageRequired || "Language is not required"}</p>
-                </IconText>
-                <IconText>
-                 
-                  <p>1-year employment contract</p>
-                </IconText>
-                <IconText>
-                  
-                  <p>Housing, medical care, renewable for 5 years, citizenship assistance.</p>
-                </IconText>
-                
-              </CardContent>
-            </DossierCard>
-          ))
-        ) : (
-          <p>No dossiers available</p>
-        )}
-      </DossierGrid>
+      {data.client && (
+        <div>
+          <h2 className="text-xl font-bold mt-4 mb-2">Client Info</h2>
+          <InfoItem><strong>City:</strong> {data.client.city}</InfoItem>
+          <InfoItem><strong>CIN:</strong> {data.client.CIN}</InfoItem>
+          <InfoItem><strong>Address:</strong> {data.client.address}</InfoItem>
+          <InfoItem><strong>Zip Code:</strong> {data.client.zipCode}</InfoItem>
+        </div>
+      )}
     </Container>
   );
 }
