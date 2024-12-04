@@ -21,21 +21,26 @@ export async function GET(req, { params }) {
   try {
     const client = await prisma.client.findUnique({
       where: { id: parseInt(id, 10) },
-      include: { register: true }, // Include related register details
+      include: {
+        register: {
+          include: {
+            dossiers: true,
+          },
+        },
+      },
     });
 
     if (!client) {
-      return new Response(
-        JSON.stringify({ error: `Client with ID ${id} not found` }),
-        { status: 404 }
-      );
+      return new Response(JSON.stringify({ error: `Client with ID ${id} not found` }), {
+        status: 404,
+      });
     }
 
     return new Response(JSON.stringify(client), { status: 200 });
   } catch (error) {
     console.error('Error fetching client:', error);
     return new Response(
-      JSON.stringify({ error: 'Failed to fetch client' }),
+      JSON.stringify({ error: 'Failed to fetch client details' }),
       { status: 500 }
     );
   }

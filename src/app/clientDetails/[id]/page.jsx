@@ -2,84 +2,128 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import styled from 'styled-components';
-
-const Container = styled.div`
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const Title = styled.h1`
-  font-size: 2rem;
-  font-weight: 700;
-  text-align: center;
-  color: #333333;
-  margin-bottom: 1rem;
-`;
-
-const InfoItem = styled.p`
-  font-size: 1rem;
-  color: #4b5563;
-  margin: 0.5rem 0;
-
-  & strong {
-    color: #111827;
-  }
-`;
 
 export default function ClientDetails() {
   const { id } = useParams();
-  const [data, setData] = useState(null);
+  const [client, setClient] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [message, setMessage] = useState(null);
+
+  const fetchClientDetails = async () => {
+    try {
+      const response = await fetch(`/api/Client/${id}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch client details');
+      }
+      const data = await response.json();
+      setClient(data);
+    } catch (err) {
+      console.error('Error fetching client details:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/Client/${id}/verify`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to verify client');
+      }
+      const updatedClient = await response.json();
+      setClient(updatedClient);
+      setMessage('Client successfully verified!');
+    } catch (err) {
+      console.error('Error verifying client:', err);
+      setMessage(err.message);
+    }
+  };
 
   useEffect(() => {
-    if (id) {
-      const fetchDetails = async () => {
-        try {
-          const response = await fetch(`/api/register/${id}`); // Fetch register and client details
-          if (!response.ok) {
-            throw new Error('Failed to fetch details');
-          }
-          const result = await response.json();
-          setData(result);
-        } catch (error) {
-          setError(error.message);
-        }
-      };
-
-      fetchDetails();
-    }
+    fetchClientDetails();
   }, [id]);
 
-  if (error) {
-    return <p style={{ color: 'red' }}>Error: {error}</p>;
+  if (loading) {
+    return <div>Loading client details...</div>;
   }
 
-  if (!data) {
-    return <p>Loading details...</p>;
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
+  }
+
+  if (!client) {
+    return <div>No client details available.</div>;
   }
 
   return (
-    <Container>
-      <Title>Client Details</Title>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Client Details</h1>
 
-      <div>
-        <InfoItem><strong>Full Name:</strong> {data.Firstname} {data.Lastname}</InfoItem>
-        <InfoItem><strong>Email:</strong> {data.email}</InfoItem>
-        <InfoItem><strong>Status:</strong> {data.StatuClient}</InfoItem>
-      </div>
-
-      {data.client && (
-        <div>
-          <h2 className="text-xl font-bold mt-4 mb-2">Client Info</h2>
-          <InfoItem><strong>City:</strong> {data.client.city}</InfoItem>
-          <InfoItem><strong>CIN:</strong> {data.client.CIN}</InfoItem>
-          <InfoItem><strong>Address:</strong> {data.client.address}</InfoItem>
-          <InfoItem><strong>Zip Code:</strong> {data.client.zipCode}</InfoItem>
+      {/* Display success or error message */}
+      {message && (
+        <div
+          className={`mb-4 ${
+            message.includes('successfully') ? 'text-green-500' : 'text-red-500'
+          }`}
+        >
+          {message}
         </div>
       )}
-    </Container>
+
+      {/* Client Information */}
+      <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-md mb-4">
+        <h2 className="text-lg font-semibold">Client Information</h2>
+        <p><strong>Full Name:</strong> {client.register.Firstname} {client.register.Lastname}</p>
+        <p><strong>Email:</strong> {client.register.email}</p>
+        <p><strong>Status:</strong> {client.register.StatuClient}</p>
+        <p><strong>Phone:</strong> {client.register.numero}</p>
+        <p><strong>City:</strong> {client.city || 'N/A'}</p>
+        <p><strong>Address:</strong> {client.address || 'N/A'}</p>
+        <p><strong>ZIP Code:</strong> {client.zipCode || 'N/A'}</p>
+        <p><strong>CIN:</strong> {client.CIN || 'N/A'}</p>
+        <p><strong>Passport:</strong> {client.passport || 'N/A'}</p>
+      </div>
+
+      {/* Verify Client Button */}
+      {client.register.StatuClient !== 'verified' && (
+        <button
+          onClick={handleVerify}
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+        >
+          Verify Client
+        </button>
+      )}
+
+      {/* Dossier Information */}
+      <div>
+        <h2 className="text-xl font-semibold mb-2">Dossiers</h2>
+        {client.register.dossiers.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {client.register.dossiers.map((dossier) => (
+              <div
+                key={dossier.id}
+                className="p-4 bg-white border border-gray-200 rounded-lg shadow-md"
+              >
+                <h3 className="font-bold mb-2">Dossier ID: {dossier.id}</h3>
+                <p><strong>Status:</strong> {dossier.status}</p>
+                <p><strong>Contra ID:</strong> {dossier.idContra}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No dossiers available for this client.</p>
+        )}
+      </div>
+    </div>
   );
 }

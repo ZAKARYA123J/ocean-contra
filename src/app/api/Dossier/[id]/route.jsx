@@ -5,23 +5,20 @@ const prisma = new PrismaClient();
 // GET method to fetch a dossier by ID
 export async function GET(req, { params }) {
   const { id } = params;
-
   try {
     const dossier = await prisma.dossier.findUnique({
       where: { id: Number(id) },
       include: {
-        client: true,
+        register: true,
         contra: true,
       },
     });
-
     if (!dossier) {
       return new Response(JSON.stringify({ error: `Dossier with ID ${id} not found` }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' },
       });
     }
-
     return new Response(JSON.stringify(dossier), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -34,18 +31,15 @@ export async function GET(req, { params }) {
     });
   }
 }
-
 // PUT method to update a dossier by ID
 export async function PUT(req, { params }) {
   const { id } = params;
   const { status } = await req.json();
-
   try {
     const updatedDossier = await prisma.dossier.update({
       where: { id: Number(id) },
       data: { status },
     });
-
     return new Response(JSON.stringify(updatedDossier), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -62,12 +56,10 @@ export async function PUT(req, { params }) {
 // DELETE method to delete a dossier by ID
 export async function DELETE(req, { params }) {
   const { id } = params;
-
   try {
     await prisma.dossier.delete({
       where: { id: Number(id) },
     });
-
     return new Response(JSON.stringify({ message: `Dossier with ID ${id} deleted successfully` }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
