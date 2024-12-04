@@ -7,10 +7,8 @@ export async function POST(req) {
   try {
     const { Firstname, Lastname, email, password, numero, StatuClient, contraId } = await req.json();
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a new register entry
     const register = await prisma.register.create({
       data: {
         Firstname,
@@ -52,7 +50,7 @@ export async function GET(req) {
   try {
     const registers = await prisma.register.findMany({
       include: { 
-        dossiers: true, 
+        client: true, 
       },
     });
 
@@ -61,8 +59,8 @@ export async function GET(req) {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error fetching registers:', error);
-    return new Response(JSON.stringify({ error: 'Failed to fetch registers' }), { 
+    console.error('Error fetching registers and clients:', error);
+    return new Response(JSON.stringify({ error: 'Failed to fetch registers and clients' }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

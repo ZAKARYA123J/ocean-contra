@@ -47,30 +47,45 @@ export async function POST(req) {
 }
 
 // GET: Retrieve a register entry by ID
-export async function GET(req) {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-
+export async function GET(req, { params }) {
   try {
+    const { id } = params;
+
     if (!id || isNaN(id)) {
-      return new Response(JSON.stringify({ error: "A valid ID is required" }), { status: 400 });
+      return new Response(
+        JSON.stringify({ error: "A valid ID is required" }),
+        { status: 400 }
+      );
     }
 
     const register = await prisma.register.findUnique({
       where: { id: parseInt(id, 10) },
-      include: { dossiers: true },
+      include: {
+        client: true,  
+        dossiers: true 
+      },
     });
 
     if (!register) {
-      return new Response(JSON.stringify({ error: "Register not found" }), { status: 404 });
+      return new Response(
+        JSON.stringify({ error: "Register not found" }),
+        { status: 404 }
+      );
     }
 
-    return new Response(JSON.stringify(register), { status: 200 });
+    return new Response(JSON.stringify(register), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error("Error retrieving register:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 400 });
+    console.error("Error retrieving register by ID:", error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500 }
+    );
   }
 }
+
 
 // PUT: Update StatuClient and create a dossier if conditions are met
 export async function PUT(req) {
